@@ -78,9 +78,25 @@ public class DB {
      * We use FlyWay class from flyway library to perform the migration in our code
      */
     private void migrateDb() {
-        Flyway flyway = new Flyway();
-        flyway.setDataSource(DB_URL, null, null);//Set the database
-        flyway.setLocations(MIGRATION_DIR);//It will run these SQL scripts under Migration Directory
-        flyway.migrate();//This performs the migration, basically creating tables and inserting values into tables if necessary
+        try {
+            Flyway flyway = new Flyway();
+            flyway.setDataSource(DB_URL, null, null);//Set the database
+            flyway.setLocations(MIGRATION_DIR);//It will run these SQL scripts under Migration Directory
+
+            // Enable baseline on migrate for first time setup
+            try {
+                flyway.baseline();
+            } catch (Exception baselineEx) {
+                // Baseline may have already been run, that's fine
+                System.out.println("Baseline already exists or not needed");
+            }
+
+            flyway.migrate();//This performs the migration, basically creating tables and inserting values into tables if necessary
+            System.out.println("Database migration completed successfully");
+        } catch (Exception ex) {
+            System.err.println("Database migration error: " + ex.toString());
+            ex.printStackTrace();
+            throw new RuntimeException("Database migration failed: " + ex.getMessage(), ex);
+        }
     }
 }
